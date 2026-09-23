@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YourChat — Your AI. Your Conversation.</title>
+    <!-- PWA Primary Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Next-generation professional AI assistant powered by Gemini. Chat, search, code, study, and create.">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                            accent: '#8b5cf6'
+                        },
+                        darkbg: '#090d16',
+                        darkcard: '#111827',
+                        darkborder: '#1f293d'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Marked Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+
+        .code-block-container {
+            position: relative;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid #1f293d;
+            background-color: #0f172a;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #1e293b;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Glow effects */
+        .glow-brand {
+            box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.3);
+        }
+        .glow-accent {
+            box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Typing Indicator Pulse */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        .dot-1 { animation: pulse-dot 1.4s infinite ease-in-out 0s; }
+        .dot-2 { animation: pulse-dot 1.4s infinite ease-in-out 0.2s; }
+        .dot-3 { animation: pulse-dot 1.4s infinite ease-in-out 0.4s; }
+
+        .prose pre {
+            margin: 0;
+            background: transparent;
+            padding: 1rem;
+        }
+        .prose code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col antialiased">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <div id="landing-page" class="min-h-screen flex flex-col justify-between bg-gradient-to-b from-darkbg via-[#0d1424] to-darkbg transition-all duration-500">
+        <!-- Header / Nav -->
+        <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg glow-brand">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-blue-400">
+                    YourChat
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="app.showAppView('chat')" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm transition-all shadow-md hover:shadow-blue-500/25 flex items-center gap-2">
+                    <span>Launch App</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="w-full max-w-5xl mx-auto px-6 py-12 text-center flex flex-col items-center justify-center my-auto">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-8 glow-brand">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                Powered by Gemini 3 Flash
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+                Your AI. <br class="hidden sm:inline">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                    Your Conversation.
+                </span>
+            </h1>
+
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed">
+                Chat, research with web grounding, analyze files and images, write code, study topics, and generate creative content with your intelligent digital assistant.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <button onclick="app.showAppView('chat')" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-lg transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    <span>Start Chatting Free</span>
+                </button>
+                <button onclick="document.getElementById('features-section').scrollIntoView({ behavior: 'smooth' })" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-semibold text-lg transition-all flex items-center justify-center gap-2">
+                    <span>Explore Features</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="features-section" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-24 text-left">
+                <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all hover:-translate-y-1">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4">
+                        <i data-lucide="globe" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Live Web Search</h3>
+                    <p class="text-sm text-slate-400">Real-time search grounding with explicit citations, source titles, and direct reference links.</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all hover:-translate-y-1">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-4">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">File & Vision Analysis</h3>
+                    <p class="text-sm text-slate-400">Upload documents, PDFs, or images for instant OCR, summarization, or visual inquiry.</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all hover:-translate-y-1">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4">
+                        <i data-lucide="code-2" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Code & Study Tools</h3>
+                    <p class="text-sm text-slate-400">Specialized suites for multi-language coding, bug fixing, flashcard quizzes, and creative writing.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="w-full border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
+            <p>© 2026 YourChat Inc. — Confidential & Private AI Workspace.</p>
+        </footer>
+    </div>
+
+    <div id="app-workspace" class="hidden h-screen w-full flex overflow-hidden bg-darkbg text-slate-100">
+
+        <aside id="sidebar" class="w-72 bg-slate-900/90 border-r border-slate-800/80 flex flex-col justify-between shrink-0 transition-all duration-300 -translate-x-full md:translate-x-0 absolute md:relative z-30 h-full">
+            <!-- Sidebar Header -->
+            <div class="p-4 flex flex-col gap-4 border-b border-slate-800/60">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5 cursor-pointer" onclick="app.showAppView('landing')">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </div>
+                        <span class="font-bold text-lg text-white tracking-tight">YourChat</span>
+                    </div>
+                    <button onclick="app.toggleSidebar()" class="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- New Chat Button -->
+                <button onclick="app.createNewChat()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-600/10">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>New Chat</span>
+                </button>
+
+                <!-- Search History Input -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                    <input type="text" id="chat-search-input" oninput="app.filterConversations(this.value)" placeholder="Search chats..." class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Workspace Modes & Modules Navigation -->
+            <div class="px-3 py-2 border-b border-slate-800/60">
+                <p class="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Assistants & Tools</p>
+                <div class="space-y-0.5">
+                    <button onclick="app.switchTab('chat')" id="nav-tab-chat" class="w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 bg-blue-600/15 text-blue-400 border border-blue-500/20">
+                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                        <span>AI Chat</span>
+                    </button>
+                    <button onclick="app.switchTab('coder')" id="nav-tab-coder" class="w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+                        <i data-lucide="code-2" class="w-4 h-4"></i>
+                        <span>Code Studio</span>
+                    </button>
+                    <button onclick="app.switchTab('writer')" id="nav-tab-writer" class="w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+                        <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                        <span>AI Writing Tools</span>
+                    </button>
+                    <button onclick="app.switchTab('study')" id="nav-tab-study" class="w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+                        <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                        <span>Study Hub</span>
+                    </button>
+                    <button onclick="app.switchTab('image-gen')" id="nav-tab-image-gen" class="w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        <span>Image Studio</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-3 space-y-4">
+                <!-- Pinned Chats Section -->
+                <div id="pinned-chats-container" class="hidden space-y-1">
+                    <p class="px-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90 flex items-center gap-1">
+                        <i data-lucide="pin" class="w-3 h-3"></i> Pinned
+                    </p>
+                    <div id="pinned-chats-list" class="space-y-0.5"></div>
+                </div>
+
+                <!-- Recent Conversations Section -->
+                <div class="space-y-1">
+                    <p class="px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Conversations</p>
+                    <div id="recent-chats-list" class="space-y-0.5"></div>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-slate-800/60 flex items-center justify-between gap-1">
+                <button onclick="app.openSettingsModal()" class="flex-1 px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-2 transition-all">
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+                    <span>Settings</span>
+                </button>
+                <button onclick="app.openAdminModal()" title="Admin Dashboard" class="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-purple-400 transition-all">
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <!-- App Navigation / Workspace Top Bar -->
+            <header class="h-14 px-4 bg-slate-900/60 border-b border-slate-800/80 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="app.toggleSidebar()" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i data-lucide="panel-left" class="w-5 h-5"></i>
+                    </button>
+                    <div id="active-chat-info" class="flex items-center gap-2">
+                        <span id="active-chat-title" class="font-semibold text-sm text-slate-100 truncate max-w-xs md:max-w-md">New Conversation</span>
+                        <span id="active-mode-badge" class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-medium">Fast Chat</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Web Search Grounding Toggle Pill -->
+                    <button id="web-search-toggle" onclick="app.toggleWebSearch()" class="px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/60 text-slate-400 hover:text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-all">
+                        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Web Search</span>
+                        <span id="web-search-indicator" class="w-2 h-2 rounded-full bg-slate-600"></span>
+                    </button>
+
+                    <!-- Model Selector Dropdown -->
+                    <select id="model-selector" onchange="app.updateModel(this.value)" class="bg-slate-800/80 border border-slate-700/80 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none">
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                        <option value="gemini-3.1-flash-image">Gemini 3.1 Flash Image</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="tab-content-chat" class="flex-1 flex flex-col overflow-hidden relative">
+                <!-- Chat Messages Feed -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl w-full mx-auto">
+                    <!-- Dynamic Messages injected here -->
+                </div>
+
+                <!-- Floating Chat Input Bar -->
+                <div class="p-3 md:p-4 max-w-4xl w-full mx-auto shrink-0">
+                    <!-- Attachment Preview Row -->
+                    <div id="attachments-preview" class="hidden mb-2 flex flex-wrap gap-2"></div>
+
+                    <!-- Input Card -->
+                    <div class="bg-slate-900 border border-slate-800 focus-within:border-blue-500/80 rounded-2xl p-2 shadow-2xl transition-all relative">
+                        <textarea id="chat-input" rows="1" placeholder="Ask anything, attach files, or type '/'" onkeydown="app.handleKeyDown(event)" oninput="app.autoResizeInput(this)" class="w-full bg-transparent border-none text-slate-100 placeholder-slate-500 text-sm px-3 py-2 focus:outline-none resize-none max-h-40 min-h-[42px]"></textarea>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800/50 px-2">
+                            <div class="flex items-center gap-1">
+                                <!-- File Upload Button -->
+                                <label class="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 cursor-pointer transition-all" title="Attach file or image">
+                                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                                    <input type="file" id="file-upload-input" multiple onchange="app.handleFileUpload(event)" class="hidden">
+                                </label>
+
+                                <!-- AI Mode Selection Pill -->
+                                <select id="mode-selector" onchange="app.switchMode(this.value)" class="bg-slate-800/70 text-slate-300 text-xs rounded-lg px-2 py-1 border border-slate-700/60 focus:outline-none">
+                                    <option value="fast">Fast Chat</option>
+                                    <option value="deep">Deep Thinking</option>
+                                    <option value="search">Web Search Mode</option>
+                                    <option value="coding">Coding Assistant</option>
+                                    <option value="writing">Creative Writing</option>
+                                    <option value="study">Study Mode</option>
+                                </select>
+
+                                <!-- Mic Record Button -->
+                                <button id="mic-btn" onclick="app.toggleVoiceInput()" class="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all" title="Voice Input">
+                                    <i data-lucide="mic" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button id="stop-btn" onclick="app.stopGeneration()" class="hidden px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 text-xs font-medium flex items-center gap-1.5 transition-all">
+                                    <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                                    <span>Stop</span>
+                                </button>
+
+                                <button id="send-btn" onclick="app.sendMessage()" class="p-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-blue-600/20 transition-all disabled:opacity-50">
+                                    <i data-lucide="send" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-coder" class="hidden flex-1 flex flex-col md:flex-row overflow-hidden p-4 gap-4">
+                <!-- Code Editor Tool Sidebar -->
+                <div class="w-full md:w-80 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4">
+                    <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="code" class="w-5 h-5 text-blue-400"></i> Code Generator & Optimizer
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Target Language</label>
+                            <select id="code-lang-select" class="w-full bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:outline-none">
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="typescript">TypeScript</option>
+                                <option value="html">HTML/CSS</option>
+                                <option value="cpp">C++</option>
+                                <option value="java">Java</option>
+                                <option value="sql">SQL</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Action Request</label>
+                            <select id="code-action-select" class="w-full bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:outline-none">
+                                <option value="generate">Generate New Code</option>
+                                <option value="fix">Find & Fix Bugs</option>
+                                <option value="optimize">Optimize Performance</option>
+                                <option value="explain">Explain Line-by-Line</option>
+                                <option value="tests">Generate Unit Tests</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Code Prompt / Source Code</label>
+                            <textarea id="code-input" rows="8" placeholder="Describe the function to generate OR paste existing code to debug..." class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 focus:outline-none resize-none"></textarea>
+                        </div>
+
+                        <button onclick="app.executeCodeTool()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all">
+                            <i data-lucide="play" class="w-4 h-4"></i> Execute Code Tool
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Code Output Screen -->
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-y-auto flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Code Output & Analysis</span>
+                        <button onclick="app.copyCodeStudioOutput()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Output
+                        </button>
+                    </div>
+                    <div id="code-studio-output" class="flex-1 mt-3 text-sm prose prose-invert max-w-none">
+                        <p class="text-slate-500 italic text-xs">Select language and action above, then click 'Execute Code Tool'.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-writer" class="hidden flex-1 overflow-y-auto p-6 max-w-4xl mx-auto w-full space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div class="p-3 rounded-xl bg-purple-500/10 text-purple-400">
+                        <i data-lucide="pen-tool" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100">AI Writing & Content Studio</h2>
+                        <p class="text-xs text-slate-400">Transform drafts, generate emails, craft blogs, or polish grammar.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tool Selection</label>
+                        <select id="writer-tool-type" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded-xl p-3 focus:outline-none">
+                            <option value="rewrite">Professional Rewrite & Polish</option>
+                            <option value="email">Professional Email Generator</option>
+                            <option value="summarize">Executive Summary</option>
+                            <option value="blog">SEO Blog Post Generator</option>
+                            <option value="yt">YouTube Title & Description Generator</option>
+                            <option value="grammar">Grammar & Syntax Fixer</option>
+                        </select>
+
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block pt-2">Source Text or Key Notes</label>
+                        <textarea id="writer-input" rows="8" placeholder="Paste draft text, bullet points, or email topic here..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl p-3 focus:outline-none resize-none"></textarea>
+
+                        <button onclick="app.executeWriterTool()" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/20">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i> Generate Content
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-full min-h-[300px]">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-800 mb-3">
+                            <span class="text-xs font-semibold text-slate-400">Generated Result</span>
+                            <button onclick="app.copyText(document.getElementById('writer-output').innerText)" class="text-xs text-purple-400 hover:underline">Copy Result</button>
+                        </div>
+                        <div id="writer-output" class="flex-1 text-xs text-slate-300 leading-relaxed overflow-y-auto prose prose-invert">
+                            <p class="text-slate-500 italic">Result will be displayed here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-study" class="hidden flex-1 overflow-y-auto p-6 max-w-4xl mx-auto w-full space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                        <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100">Study & Quiz Assistant</h2>
+                        <p class="text-xs text-slate-400">Generate multiple-choice quizzes, step-by-step topic breakdowns, or flashcards.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="app.openStudyModal('explain')" class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-left transition-all">
+                        <i data-lucide="book-open" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                        <h3 class="font-bold text-sm text-slate-100 mb-1">Explain Complex Topic</h3>
+                        <p class="text-xs text-slate-400">Get simplified explanations with real-world analogies.</p>
+                    </button>
+
+                    <button onclick="app.generateQuiz()" class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-left transition-all">
+                        <i data-lucide="help-circle" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                        <h3 class="font-bold text-sm text-slate-100 mb-1">Generate Practice Quiz</h3>
+                        <p class="text-xs text-slate-400">Create an interactive MCQ quiz on any subject.</p>
+                    </button>
+
+                    <button onclick="app.openStudyModal('plan')" class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-left transition-all">
+                        <i data-lucide="calendar" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                        <h3 class="font-bold text-sm text-slate-100 mb-1">Create Study Schedule</h3>
+                        <p class="text-xs text-slate-400">Build a tailored day-by-day learning plan.</p>
+                    </button>
+                </div>
+
+                <!-- Interactive Quiz Container -->
+                <div id="study-interactive-container" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 min-h-[250px]">
+                    <p class="text-xs text-slate-500 text-center py-8">Select a study action above to start learning.</p>
+                </div>
+            </div>
+
+            <div id="tab-content-image-gen" class="hidden flex-1 overflow-y-auto p-6 max-w-4xl mx-auto w-full space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400">
+                        <i data-lucide="image" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100">AI Image Studio</h2>
+                        <p class="text-xs text-slate-400">Generate creative visuals directly via Gemini 3.1 Flash Image capabilities.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">Image Prompt</label>
+                            <textarea id="image-gen-prompt" rows="4" placeholder="A futuristic cyberpunk city with neon rainy streets and flying vehicles..." class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded-xl p-3 focus:outline-none resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">Aspect Ratio</label>
+                            <select id="image-gen-aspect" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded-xl p-2.5 focus:outline-none">
+                                <option value="1:1">1:1 Square</option>
+                                <option value="16:9">16:9 Widescreen</option>
+                                <option value="9:16">9:16 Portrait</option>
+                                <option value="4:3">4:3 Standard</option>
+                            </select>
+                        </div>
+
+                        <button onclick="app.generateImage()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-600/20">
+                            <i data-lucide="wand-2" class="w-4 h-4"></i> Generate Visual
+                        </button>
+                    </div>
+
+                    <!-- Image Result Preview Box -->
+                    <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[350px] relative">
+                        <div id="image-gen-loader" class="hidden text-center space-y-3">
+                            <div class="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            <p class="text-xs text-slate-400">Creating your image with Gemini Image model...</p>
+                        </div>
+
+                        <div id="image-gen-result" class="hidden w-full flex flex-col items-center gap-3">
+                            <img id="image-gen-img" src="" alt="Generated Visual" class="max-h-[360px] rounded-xl object-contain border border-slate-800 shadow-xl">
+                            <a id="image-gen-download" href="#" download="yourchat-gen.png" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Download High Res
+                            </a>
+                        </div>
+
+                        <div id="image-gen-placeholder" class="text-center text-slate-500 space-y-2">
+                            <i data-lucide="image" class="w-12 h-12 mx-auto stroke-1"></i>
+                            <p class="text-xs">Your generated artwork will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-blue-400"></i> Settings & Configuration
+                </h3>
+                <button onclick="app.closeSettingsModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-300 block mb-1">Gemini API Key</label>
+                    <input type="password" id="setting-api-key" placeholder="Enter API Key (Optional runtime override)" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none">
+                    <p class="text-[11px] text-slate-500 mt-1">Leave empty to use default built-in runtime key environment.</p>
+                </div>
+
+                <div>
+                    <label class="font-semibold text-slate-300 block mb-1">Custom System Instruction</label>
+                    <textarea id="setting-system-prompt" rows="3" placeholder="You are YourChat, a helpful, precise AI assistant..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="font-semibold text-slate-300 block mb-1">Temperature: <span id="temp-val">0.7</span></label>
+                        <input type="range" id="setting-temperature" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('temp-val').innerText = this.value" class="w-full">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-300 block mb-1">Theme Mode</label>
+                        <select id="setting-theme" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200">
+                            <option value="dark">Dark Theme (Default)</option>
+                            <option value="light">Light Theme</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 border-t border-slate-800 pt-4">
+                <button onclick="app.closeSettingsModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-medium">Cancel</button>
+                <button onclick="app.saveSettings()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 text-xs font-medium">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                    <i data-lucide="shield" class="w-5 h-5 text-purple-400"></i> Admin System Diagnostics
+                </h3>
+                <button onclick="app.closeAdminModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
+                    <p class="text-[10px] uppercase font-semibold text-slate-400">Total Requests</p>
+                    <p id="admin-stat-requests" class="text-xl font-bold text-blue-400 mt-1">0</p>
+                </div>
+                <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
+                    <p class="text-[10px] uppercase font-semibold text-slate-400">Conversations</p>
+                    <p id="admin-stat-chats" class="text-xl font-bold text-purple-400 mt-1">0</p>
+                </div>
+                <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
+                    <p class="text-[10px] uppercase font-semibold text-slate-400">Status</p>
+                    <p class="text-xl font-bold text-emerald-400 mt-1">Operational</p>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-xs font-semibold text-slate-300 mb-2">System Activity Log</p>
+                <div id="admin-log-box" class="bg-slate-950 p-3 rounded-xl border border-slate-800 h-40 overflow-y-auto font-mono text-[11px] text-slate-400 space-y-1">
+                    <p>[System] YourChat initialized successfully.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end border-t border-slate-800 pt-3">
+                <button onclick="app.closeAdminModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main Application Controller Object
+        class YourChatApp {
+            constructor() {
+                // Application State
+                this.conversations = JSON.parse(localStorage.getItem('yourchat_convos')) || [];
+                this.activeConversationId = null;
+                this.apiKey = localStorage.getItem('yourchat_api_key') || "";
+                this.webSearchEnabled = false;
+                this.currentMode = 'fast';
+                this.currentModel = 'gemini-3-flash-preview';
+                this.temperature = parseFloat(localStorage.getItem('yourchat_temp')) || 0.7;
+                this.systemPrompt = localStorage.getItem('yourchat_system') || "You are YourChat, an empathetic, precise, and highly capable AI assistant.";
+                this.pendingFiles = [];
+                this.isGenerating = false;
+                this.abortController = null;
+                
+                // Admin statistics
+                this.requestCount = parseInt(localStorage.getItem('yourchat_req_count')) || 0;
+
+                // Speech state
+                this.recognition = null;
+                this.isRecording = false;
+
+                this.init();
+            }
+
+            init() {
+                // Lucide icon replacement
+                lucide.createIcons();
+
+                // Setup marked options
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                        return hljs.highlight(code, { language }).value;
+                    },
+                    breaks: true
+                });
+
+                // Load existing or initialize initial chat
+                if (this.conversations.length === 0) {
+                    this.createNewChat(false);
+                } else {
+                    this.activeConversationId = this.conversations[0].id;
+                }
+
+                this.renderConversationsList();
+                this.renderMessages();
+                this.setupSpeechRecognition();
+
+                // Log system init
+                this.logAdmin("App engine booted up with " + this.conversations.length + " saved chats.");
+            }
+
+            switchTab(tabId) {
+                const tabs = ['chat', 'coder', 'writer', 'study', 'image-gen'];
+                tabs.forEach(t => {
+                    const content = document.getElementById(`tab-content-${t}`);
+                    const nav = document.getElementById(`nav-tab-${t}`);
+                    if (content) content.classList.add('hidden');
+                    if (nav) {
+                        nav.classList.remove('bg-blue-600/15', 'text-blue-400', 'border', 'border-blue-500/20');
+                        nav.classList.add('text-slate-400');
+                    }
+                });
+
+                const activeContent = document.getElementById(`tab-content-${tabId}`);
+                const activeNav = document.getElementById(`nav-tab-${tabId}`);
+                if (activeContent) activeContent.classList.remove('hidden');
+                if (activeNav) {
+                    activeNav.classList.add('bg-blue-600/15', 'text-blue-400', 'border', 'border-blue-500/20');
+                    activeNav.classList.remove('text-slate-400');
+                }
+            }
+
+            showAppView(view) {
+                const landing = document.getElementById('landing-page');
+                const workspace = document.getElementById('app-workspace');
+                if (view === 'chat') {
+                    landing.classList.add('hidden');
+                    workspace.classList.remove('hidden');
+                } else {
+                    workspace.classList.add('hidden');
+                    landing.classList.remove('hidden');
+                }
+            }
+
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('-translate-x-full');
+            }
+
+            createNewChat(switchView = true) {
+                const newChat = {
+                    id: 'conv_' + Date.now(),
+                    title: 'New Conversation',
+                    pinned: false,
+                    archived: false,
+                    updatedAt: new Date().toISOString(),
+                    messages: [
+                        {
+                            role: 'model',
+                            content: 'Hello! I am **YourChat**. How can I help you today? Feel free to ask questions, attach files, or switch modes below.',
+                            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }
+                    ]
+                };
+
+                this.conversations.unshift(newChat);
+                this.activeConversationId = newChat.id;
+                this.saveConversationsToStorage();
+                this.renderConversationsList();
+                this.renderMessages();
+
+                if (switchView) {
+                    this.switchTab('chat');
+                }
+            }
+
+            getActiveConversation() {
+                return this.conversations.find(c => c.id === this.activeConversationId);
+            }
+
+            selectConversation(id) {
+                this.activeConversationId = id;
+                this.renderConversationsList();
+                this.renderMessages();
+                this.switchTab('chat');
+            }
+
+            togglePinConversation(id, event) {
+                event.stopPropagation();
+                const conv = this.conversations.find(c => c.id === id);
+                if (conv) {
+                    conv.pinned = !conv.pinned;
+                    this.saveConversationsToStorage();
+                    this.renderConversationsList();
+                    this.showToast(conv.pinned ? "Chat pinned" : "Chat unpinned");
+                }
+            }
+
+            deleteConversation(id, event) {
+                event.stopPropagation();
+                this.conversations = this.conversations.filter(c => c.id !== id);
+                if (this.activeConversationId === id) {
+                    if (this.conversations.length > 0) {
+                        this.activeConversationId = this.conversations[0].id;
+                    } else {
+                        this.createNewChat(false);
+                    }
+                }
+                this.saveConversationsToStorage();
+                this.renderConversationsList();
+                this.renderMessages();
+                this.showToast("Conversation deleted");
+            }
+
+            saveConversationsToStorage() {
+                localStorage.setItem('yourchat_convos', JSON.stringify(this.conversations));
+            }
+
+            renderConversationsList(filter = '') {
+                const pinnedList = document.getElementById('pinned-chats-list');
+                const recentList = document.getElementById('recent-chats-list');
+                const pinnedContainer = document.getElementById('pinned-chats-container');
+
+                pinnedList.innerHTML = '';
+                recentList.innerHTML = '';
+
+                let hasPinned = false;
+
+                this.conversations.forEach(conv => {
+                    if (filter && !conv.title.toLowerCase().includes(filter.toLowerCase())) return;
+
+                    const isActive = conv.id === this.activeConversationId;
+                    const item = document.createElement('div');
+                    item.className = `group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-xs transition-all ${
+                        isActive ? 'bg-slate-800 text-white font-medium border border-slate-700/50' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                    }`;
+                    item.onclick = () => this.selectConversation(conv.id);
+
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2 truncate flex-1">
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-500'}"></i>
+                            <span class="truncate">${this.escapeHtml(conv.title)}</span>
+                        </div>
+                        <div class="hidden group-hover:flex items-center gap-1 shrink-0">
+                            <button onclick="app.togglePinConversation('${conv.id}', event)" class="p-1 text-slate-400 hover:text-amber-400" title="Pin">
+                                <i data-lucide="pin" class="w-3 h-3"></i>
+                            </button>
+                            <button onclick="app.deleteConversation('${conv.id}', event)" class="p-1 text-slate-400 hover:text-rose-400" title="Delete">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    if (conv.pinned) {
+                        pinnedList.appendChild(item);
+                        hasPinned = true;
+                    } else {
+                        recentList.appendChild(item);
+                    }
+                });
+
+                if (hasPinned) {
+                    pinnedContainer.classList.remove('hidden');
+                } else {
+                    pinnedContainer.classList.add('hidden');
+                }
+
+                lucide.createIcons();
+            }
+
+            filterConversations(query) {
+                this.renderConversationsList(query);
+            }
+
+            renderMessages() {
+                const container = document.getElementById('chat-messages');
+                const activeConv = this.getActiveConversation();
+
+                if (!activeConv) return;
+
+                document.getElementById('active-chat-title').innerText = activeConv.title;
+
+                container.innerHTML = '';
+
+                activeConv.messages.forEach((msg, idx) => {
+                    const msgDiv = document.createElement('div');
+                    const isUser = msg.role === 'user';
+
+                    msgDiv.className = `flex gap-3 md:gap-4 ${isUser ? 'justify-end' : 'justify-start'}`;
+
+                    let attachmentsHtml = '';
+                    if (msg.attachments && msg.attachments.length > 0) {
+                        attachmentsHtml = '<div class="flex flex-wrap gap-2 mb-2">';
+                        msg.attachments.forEach(att => {
+                            if (att.type.startsWith('image/')) {
+                                attachmentsHtml += `<img src="${att.data}" class="max-w-xs max-h-48 rounded-lg border border-slate-700 object-cover">`;
+                            } else {
+                                attachmentsHtml += `<div class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5"><i data-lucide="file" class="w-3.5 h-3.5"></i> ${this.escapeHtml(att.name)}</div>`;
+                            }
+                        });
+                        attachmentsHtml += '</div>';
+                    }
+
+                    // Render Markdown for model messages
+                    const formattedContent = isUser ? this.escapeHtml(msg.content).replace(/\n/g, '<br>') : marked.parse(msg.content);
+
+                    let sourcesHtml = '';
+                    if (msg.sources && msg.sources.length > 0) {
+                        sourcesHtml = `<div class="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400">
+                            <p class="font-semibold text-[11px] uppercase tracking-wider text-blue-400 mb-1 flex items-center gap-1"><i data-lucide="search" class="w-3 h-3"></i> Grounded Web Sources:</p>
+                            <div class="flex flex-wrap gap-2">`;
+                        msg.sources.forEach(src => {
+                            sourcesHtml += `<a href="${src.uri}" target="_blank" class="px-2 py-1 rounded bg-slate-800 border border-slate-700/80 hover:border-blue-500/50 text-blue-400 hover:underline flex items-center gap-1 truncate max-w-xs"><i data-lucide="external-link" class="w-3 h-3"></i> ${this.escapeHtml(src.title || src.uri)}</a>`;
+                        });
+                        sourcesHtml += `</div></div>`;
+                    }
+
+                    if (isUser) {
+                        msgDiv.innerHTML = `
+                            <div class="max-w-[85%] sm:max-w-[75%] space-y-1">
+                                ${attachmentsHtml}
+                                <div class="bg-brand-600 text-white p-3.5 rounded-2xl rounded-tr-none text-sm leading-relaxed shadow-md">
+                                    ${formattedContent}
+                                </div>
+                                <div class="text-[10px] text-slate-500 text-right pr-1">${msg.timestamp || ''}</div>
+                            </div>
+                            <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
+                                You
+                            </div>
+                        `;
+                    } else {
+                        msgDiv.innerHTML = `
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-md">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            </div>
+                            <div class="max-w-[85%] sm:max-w-[80%] space-y-1">
+                                <div class="bg-slate-900 border border-slate-800/90 text-slate-200 p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed prose prose-invert max-w-none shadow-sm">
+                                    ${formattedContent}
+                                    ${sourcesHtml}
+                                </div>
+                                <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
+                                    <span>${msg.timestamp || ''}</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="app.copyText(\`${this.escapeHtml(msg.content)}\`)" class="hover:text-slate-300" title="Copy"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                                        <button onclick="app.speakText(\`${this.escapeHtml(msg.content)}\`)" class="hover:text-slate-300" title="Read Aloud"><i data-lucide="volume-2" class="w-3.5 h-3.5"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    container.appendChild(msgDiv);
+                });
+
+                // Attach copy event listeners to code headers inside marked output
+                this.enhanceCodeBlocks(container);
+
+                container.scrollTop = container.scrollHeight;
+                lucide.createIcons();
+            }
+
+            enhanceCodeBlocks(container) {
+                const codePres = container.querySelectorAll('pre code');
+                codePres.forEach(codeEl => {
+                    const pre = codeEl.parentElement;
+                    if (pre.parentElement.classList.contains('code-block-container')) return;
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'code-block-container';
+
+                    const header = document.createElement('div');
+                    header.className = 'code-header';
+                    header.innerHTML = `
+                        <span>Code Output</span>
+                        <button class="hover:text-white flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    `;
+
+                    header.querySelector('button').onclick = () => {
+                        this.copyText(codeEl.innerText);
+                    };
+
+                    pre.parentNode.insertBefore(wrapper, pre);
+                    wrapper.appendChild(header);
+                    wrapper.appendChild(pre);
+                });
+            }
+
+            handleFileUpload(event) {
+                const files = Array.from(event.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.pendingFiles.push({
+                            name: file.name,
+                            type: file.type,
+                            data: e.target.result
+                        });
+                        this.renderAttachmentsPreview();
+                    };
+                    if (file.type.startsWith('image/')) {
+                        reader.readAsDataURL(file);
+                    } else {
+                        reader.readAsText(file);
+                    }
+                });
+            }
+
+            renderAttachmentsPreview() {
+                const container = document.getElementById('attachments-preview');
+                container.innerHTML = '';
+
+                if (this.pendingFiles.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                container.classList.remove('hidden');
+                this.pendingFiles.forEach((file, idx) => {
+                    const pill = document.createElement('div');
+                    pill.className = 'px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 flex items-center gap-2';
+                    pill.innerHTML = `
+                        <i data-lucide="${file.type.startsWith('image/') ? 'image' : 'file-text'}" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span class="truncate max-w-[120px]">${this.escapeHtml(file.name)}</span>
+                        <button onclick="app.removePendingFile(${idx})" class="text-slate-400 hover:text-rose-400"><i data-lucide="x" class="w-3 h-3"></i></button>
+                    `;
+                    container.appendChild(pill);
+                });
+                lucide.createIcons();
+            }
+
+            removePendingFile(index) {
+                this.pendingFiles.splice(index, 1);
+                this.renderAttachmentsPreview();
+            }
+
+            async sendMessage() {
+                const input = document.getElementById('chat-input');
+                const text = input.value.trim();
+
+                if (!text && this.pendingFiles.length === 0) return;
+                if (this.isGenerating) return;
+
+                const activeConv = this.getActiveConversation();
+                if (!activeConv) return;
+
+                // Auto title conversation if new
+                if (activeConv.messages.length <= 1 && text) {
+                    activeConv.title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
+                }
+
+                // Add User Message
+                const userMsg = {
+                    role: 'user',
+                    content: text,
+                    attachments: [...this.pendingFiles],
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+
+                activeConv.messages.push(userMsg);
+                
+                const attachedFiles = [...this.pendingFiles];
+                this.pendingFiles = [];
+                input.value = '';
+                this.autoResizeInput(input);
+                this.renderAttachmentsPreview();
+                this.renderMessages();
+
+                // UI Generating state
+                this.isGenerating = true;
+                this.toggleGeneratingUI(true);
+
+                // Add Placeholder AI response with loader
+                const modelMsg = {
+                    role: 'model',
+                    content: 'Typing...',
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                activeConv.messages.push(modelMsg);
+                this.renderMessages();
+
+                // Call Gemini API
+                try {
+                    this.logAdmin(`API call initiated. Mode: ${this.currentMode}, Grounding: ${this.webSearchEnabled}`);
+                    this.requestCount++;
+                    localStorage.setItem('yourchat_req_count', this.requestCount);
+
+                    const responseData = await this.callGeminiAPI(activeConv.messages.slice(0, -1), attachedFiles);
+                    
+                    modelMsg.content = responseData.text;
+                    if (responseData.sources) {
+                        modelMsg.sources = responseData.sources;
+                    }
+
+                    this.saveConversationsToStorage();
+                    this.renderConversationsList();
+                } catch (err) {
+                    modelMsg.content = "⚠️ **YourChat Error:** Unable to complete response. " + err.message;
+                    this.logAdmin("API Failure: " + err.message);
+                } finally {
+                    this.isGenerating = false;
+                    this.toggleGeneratingUI(false);
+                    this.renderMessages();
+                }
+            }
+
+            async callGeminiAPI(messagesHistory, currentAttachments) {
+                const apiKey = this.apiKey || "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.currentModel}:generateContent?key=${apiKey}`;
+
+                // Construct Gemini Payload Parts
+                const contents = [];
+
+                // System Instruction setup
+                let systemInstructionText = this.systemPrompt;
+                if (this.currentMode === 'coding') {
+                    systemInstructionText += " Focus deeply on providing clean, optimized, bug-free code blocks with minimal filler.";
+                } else if (this.currentMode === 'writing') {
+                    systemInstructionText += " Act as an expert writer. Structure content beautifully with active voice and clear headings.";
+                } else if (this.currentMode === 'study') {
+                    systemInstructionText += " Provide educational step-by-step explanations, analogies, and key summary takeaways.";
+                }
+
+                messagesHistory.forEach(msg => {
+                    const parts = [];
+                    if (msg.attachments) {
+                        msg.attachments.forEach(att => {
+                            if (att.type.startsWith('image/')) {
+                                const base64Data = att.data.split(',')[1];
+                                parts.push({
+                                    inlineData: {
+                                        mimeType: att.type,
+                                        data: base64Data
+                                    }
+                                });
+                            } else {
+                                parts.push({ text: `[Attached File: ${att.name}]\n${att.data}` });
+                            }
+                        });
+                    }
+                    if (msg.content) {
+                        parts.push({ text: msg.content });
+                    }
+                    if (parts.length > 0) {
+                        contents.push({
+                            role: msg.role === 'user' ? 'user' : 'model',
+                            parts: parts
+                        });
+                    }
+                });
+
+                const payload = {
+                    contents: contents,
+                    systemInstruction: {
+                        parts: [{ text: systemInstructionText }]
+                    }
+                };
+
+                // Add Google Search grounding tool if Web Search enabled
+                if (this.webSearchEnabled || this.currentMode === 'search') {
+                    payload.tools = [{ "google_search": {} }];
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errJson = await response.json().catch(() => ({}));
+                    throw new Error(errJson.error?.message || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (!candidate) {
+                    throw new Error("No response generated from Gemini API.");
+                }
+
+                const text = candidate.content?.parts?.[0]?.text || "No text content returned.";
+
+                // Extract Grounding Sources if present
+                let sources = [];
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title);
+                }
+
+                return { text, sources };
+            }
+
+            async generateImage() {
+                const promptInput = document.getElementById('image-gen-prompt');
+                const aspectSelect = document.getElementById('image-gen-aspect');
+                const loader = document.getElementById('image-gen-loader');
+                const resultBox = document.getElementById('image-gen-result');
+                const placeholder = document.getElementById('image-gen-placeholder');
+                const imgEl = document.getElementById('image-gen-img');
+                const downloadLink = document.getElementById('image-gen-download');
+
+                const prompt = promptInput.value.trim();
+                if (!prompt) {
+                    this.showToast("Please enter an image prompt");
+                    return;
+                }
+
+                loader.classList.remove('hidden');
+                resultBox.classList.add('hidden');
+                placeholder.classList.add('hidden');
+
+                try {
+                    const apiKey = this.apiKey || "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ['TEXT', 'IMAGE'],
+                            imageConfig: { aspectRatio: aspectSelect.value }
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                    if (base64Data) {
+                        const imgUrl = `data:image/png;base64,${base64Data}`;
+                        imgEl.src = imgUrl;
+                        downloadLink.href = imgUrl;
+                        resultBox.classList.remove('hidden');
+                        this.showToast("Image created successfully!");
+                    } else {
+                        throw new Error("Model response did not contain inline image data.");
+                    }
+                } catch (err) {
+                    this.showToast("Image Generation Failed: " + err.message);
+                    placeholder.classList.remove('hidden');
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            }
+
+            async executeCodeTool() {
+                const lang = document.getElementById('code-lang-select').value;
+                const action = document.getElementById('code-action-select').value;
+                const input = document.getElementById('code-input').value.trim();
+                const outputBox = document.getElementById('code-studio-output');
+
+                if (!input) {
+                    this.showToast("Please enter code or prompt");
+                    return;
+                }
+
+                outputBox.innerHTML = '<p class="text-blue-400 font-mono text-xs animate-pulse">Analyzing and executing code action with Gemini...</p>';
+
+                const prompt = `Language: ${lang}\nAction: ${action}\nUser Code/Prompt:\n${input}`;
+
+                try {
+                    const apiKey = this.apiKey || "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: "You are a world-class code assistant. Return beautifully formatted Markdown code blocks." }] }
+                        })
+                    });
+
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No code output generated.";
+
+                    outputBox.innerHTML = marked.parse(text);
+                    this.enhanceCodeBlocks(outputBox);
+                } catch (err) {
+                    outputBox.innerHTML = `<p class="text-rose-400">Execution Error: ${err.message}</p>`;
+                }
+            }
+
+            copyCodeStudioOutput() {
+                const text = document.getElementById('code-studio-output').innerText;
+                this.copyText(text);
+            }
+
+            async executeWriterTool() {
+                const toolType = document.getElementById('writer-tool-type').value;
+                const input = document.getElementById('writer-input').value.trim();
+                const outputBox = document.getElementById('writer-output');
+
+                if (!input) {
+                    this.showToast("Please enter text or notes");
+                    return;
+                }
+
+                outputBox.innerHTML = '<p class="text-purple-400 font-mono text-xs animate-pulse">Crafting copy...</p>';
+
+                const prompt = `Task: ${toolType}\nInput Content:\n${input}`;
+
+                try {
+                    const apiKey = this.apiKey || "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: "You are an elite creative director and copywriter." }] }
+                        })
+                    });
+
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No output.";
+
+                    outputBox.innerHTML = marked.parse(text);
+                } catch (err) {
+                    outputBox.innerHTML = `<p class="text-rose-400">Writer Error: ${err.message}</p>`;
+                }
+            }
+
+            async generateQuiz() {
+                const container = document.getElementById('study-interactive-container');
+                const topic = prompt("Enter topic for your MCQ quiz:", "Quantum Physics basics");
+                if (!topic) return;
+
+                container.innerHTML = '<p class="text-emerald-400 font-mono text-xs text-center py-8 animate-pulse">Generating interactive Quiz questions...</p>';
+
+                try {
+                    const apiKey = this.apiKey || "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                    const prompt = `Generate a 3-question Multiple Choice Quiz on '${topic}'. Formatted as JSON array with properties: question, options (array of 4 strings), answerIndex (number 0-3), explanation (string).`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+
+                    const result = await response.json();
+                    const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const quizData = JSON.parse(jsonText);
+
+                    this.renderQuizUI(container, topic, quizData);
+                } catch (err) {
+                    container.innerHTML = `<p class="text-rose-400 text-center py-8">Quiz Generation Failed: ${err.message}</p>`;
+                }
+            }
+
+            renderQuizUI(container, topic, quizData) {
+                container.innerHTML = `<h3 class="font-bold text-slate-100 mb-4 flex items-center justify-between">
+                    <span>Quiz: ${this.escapeHtml(topic)}</span>
+                    <span class="text-xs text-emerald-400 font-normal">${quizData.length} Questions</span>
+                </h3>`;
+
+                quizData.forEach((q, idx) => {
+                    const qBox = document.createElement('div');
+                    qBox.className = 'mb-6 p-4 bg-slate-950/60 rounded-xl border border-slate-800 space-y-3';
+                    
+                    let optionsHtml = '';
+                    q.options.forEach((opt, optIdx) => {
+                        optionsHtml += `<button onclick="app.checkAnswer(this, ${optIdx === q.answerIndex}, '${this.escapeHtml(q.explanation)}')" class="w-full text-left p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 transition-all border border-slate-700/60">${opt}</button>`;
+                    });
+
+                    qBox.innerHTML = `
+                        <p class="font-semibold text-xs text-slate-200">${idx + 1}. ${this.escapeHtml(q.question)}</p>
+                        <div class="space-y-2 mt-2">${optionsHtml}</div>
+                        <div class="feedback-box hidden text-xs p-2.5 rounded-lg mt-2"></div>
+                    `;
+                    container.appendChild(qBox);
+                });
+            }
+
+            checkAnswer(btn, isCorrect, explanation) {
+                const parent = btn.parentElement;
+                const feedbackBox = parent.nextElementSibling;
+                
+                // Disable sister buttons
+                Array.from(parent.children).forEach(b => b.disabled = true);
+
+                if (isCorrect) {
+                    btn.classList.add('bg-emerald-600', 'text-white');
+                    feedbackBox.className = 'feedback-box block text-xs p-2.5 rounded-lg mt-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30';
+                    feedbackBox.innerHTML = `<strong>Correct! 🎉</strong> ${explanation}`;
+                    confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+                } else {
+                    btn.classList.add('bg-rose-600', 'text-white');
+                    feedbackBox.className = 'feedback-box block text-xs p-2.5 rounded-lg mt-2 bg-rose-500/10 text-rose-300 border border-rose-500/30';
+                    feedbackBox.innerHTML = `<strong>Incorrect.</strong> ${explanation}`;
+                }
+            }
+
+            openStudyModal(type) {
+                const topic = prompt(`Enter topic to ${type}:`, "Machine Learning Fundamentals");
+                if (topic) {
+                    this.switchTab('chat');
+                    document.getElementById('chat-input').value = `${type === 'explain' ? 'Explain topic clearly with analogies' : 'Create a 7-day study plan for'}: ${topic}`;
+                    this.sendMessage();
+                }
+            }
+
+            setupSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+
+                    this.recognition.onresult = (e) => {
+                        const transcript = e.results[0][0].transcript;
+                        document.getElementById('chat-input').value = transcript;
+                        this.showToast("Voice captured");
+                        this.toggleVoiceInput(false);
+                    };
+
+                    this.recognition.onerror = () => {
+                        this.toggleVoiceInput(false);
+                    };
+                }
+            }
+
+            toggleVoiceInput(forceState) {
+                const micBtn = document.getElementById('mic-btn');
+                this.isRecording = forceState !== undefined ? forceState : !this.isRecording;
+
+                if (this.isRecording && this.recognition) {
+                    micBtn.classList.add('text-rose-500', 'animate-pulse');
+                    this.recognition.start();
+                } else if (this.recognition) {
+                    micBtn.classList.remove('text-rose-500', 'animate-pulse');
+                    this.recognition.stop();
+                } else {
+                    this.showToast("Speech recognition not supported in this browser.");
+                }
+            }
+
+            speakText(text) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text.replace(/[#*`_]/g, ''));
+                    window.speechSynthesis.speak(utterance);
+                    this.showToast("Reading response aloud");
+                }
+            }
+
+            openSettingsModal() {
+                document.getElementById('setting-api-key').value = this.apiKey;
+                document.getElementById('setting-system-prompt').value = this.systemPrompt;
+                document.getElementById('setting-temperature').value = this.temperature;
+                document.getElementById('temp-val').innerText = this.temperature;
+                document.getElementById('settings-modal').classList.remove('hidden');
+            }
+
+            closeSettingsModal() {
+                document.getElementById('settings-modal').classList.add('hidden');
+            }
+
+            saveSettings() {
+                this.apiKey = document.getElementById('setting-api-key').value.trim();
+                this.systemPrompt = document.getElementById('setting-system-prompt').value.trim();
+                this.temperature = parseFloat(document.getElementById('setting-temperature').value);
+
+                localStorage.setItem('yourchat_api_key', this.apiKey);
+                localStorage.setItem('yourchat_system', this.systemPrompt);
+                localStorage.setItem('yourchat_temp', this.temperature);
+
+                this.closeSettingsModal();
+                this.showToast("Settings saved!");
+            }
+
+            openAdminModal() {
+                document.getElementById('admin-stat-requests').innerText = this.requestCount;
+                document.getElementById('admin-stat-chats').innerText = this.conversations.length;
+                document.getElementById('admin-modal').classList.remove('hidden');
+            }
+
+            closeAdminModal() {
+                document.getElementById('admin-modal').classList.add('hidden');
+            }
+
+            logAdmin(msg) {
+                const logBox = document.getElementById('admin-log-box');
+                if (logBox) {
+                    const line = document.createElement('p');
+                    line.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                    logBox.appendChild(line);
+                    logBox.scrollTop = logBox.scrollHeight;
+                }
+            }
+
+            toggleWebSearch() {
+                this.webSearchEnabled = !this.webSearchEnabled;
+                const indicator = document.getElementById('web-search-indicator');
+                const btn = document.getElementById('web-search-toggle');
+
+                if (this.webSearchEnabled) {
+                    indicator.className = 'w-2 h-2 rounded-full bg-blue-400 animate-pulse';
+                    btn.classList.add('border-blue-500/50', 'text-blue-400');
+                    this.showToast("Web Search Grounding Enabled");
+                } else {
+                    indicator.className = 'w-2 h-2 rounded-full bg-slate-600';
+                    btn.classList.remove('border-blue-500/50', 'text-blue-400');
+                    this.showToast("Web Search Disabled");
+                }
+            }
+
+            switchMode(mode) {
+                this.currentMode = mode;
+                const badge = document.getElementById('active-mode-badge');
+                const modeMap = {
+                    fast: 'Fast Chat',
+                    deep: 'Deep Thinking',
+                    search: 'Web Search',
+                    coding: 'Coding Assistant',
+                    writing: 'Creative Writing',
+                    study: 'Study Mode'
+                };
+                badge.innerText = modeMap[mode] || mode;
+                this.showToast(`Switched to ${modeMap[mode]}`);
+            }
+
+            updateModel(model) {
+                this.currentModel = model;
+                this.showToast(`Active Model: ${model}`);
+            }
+
+            toggleGeneratingUI(isGenerating) {
+                const sendBtn = document.getElementById('send-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                if (isGenerating) {
+                    sendBtn.classList.add('hidden');
+                    stopBtn.classList.remove('hidden');
+                } else {
+                    sendBtn.classList.remove('hidden');
+                    stopBtn.classList.add('hidden');
+                }
+            }
+
+            stopGeneration() {
+                this.isGenerating = false;
+                this.toggleGeneratingUI(false);
+                this.showToast("Response generation stopped");
+            }
+
+            autoResizeInput(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+
+            handleKeyDown(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    this.sendMessage();
+                }
+            }
+
+            copyText(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showToast("Copied to clipboard!");
+                }).catch(() => {
+                    this.showToast("Failed to copy");
+                });
+            }
+
+            escapeHtml(str) {
+                if (!str) return '';
+                return str
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            showToast(message) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto';
+                toast.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-blue-400"></i> <span>${this.escapeHtml(message)}</span>`;
+                
+                container.appendChild(toast);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                }, 10);
+
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Bootstrapping App Instance on Window Load
+        let app;
+        window.onload = () => {
+            app = new YourChatApp();
+        };
+    </script>
+</body>
+</html>
